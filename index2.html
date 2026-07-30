@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Welcome — Dev2</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; background:#f7f8fb; color:#111; }
+    header { padding: 24px; text-align:center; background: linear-gradient(90deg,#4f46e5,#06b6d4); color:white; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    p.lead { margin:0; opacity:0.95; }
+    main { max-width: 1000px; margin: 28px auto; padding: 0 16px; }
+
+    /* Slider */
+    .slider { position:relative; overflow:hidden; border-radius:8px; box-shadow:0 6px 20px rgba(16,24,40,0.08); background: #fff; }
+    .slides { display:flex; transition: transform 0.6s ease; width:100%; }
+    .slide { min-width:100%; user-select:none; text-align:center; padding:20px 12px; box-sizing:border-box; }
+    .slide img { max-width:100%; height:360px; object-fit:cover; border-radius:6px; display:block; margin:0 auto; background:#efefef; }
+
+    .controls { position:absolute; top:50%; left:0; right:0; display:flex; justify-content:space-between; transform:translateY(-50%); pointer-events:none; padding:0 8px; }
+    .btn { pointer-events:auto; background:rgba(255,255,255,0.85); border:0; padding:8px 12px; border-radius:6px; cursor:pointer; box-shadow:0 2px 8px rgba(2,6,23,0.08); }
+    .dots { text-align:center; padding:12px 0; }
+    .dot { display:inline-block; width:10px; height:10px; border-radius:50%; background:#cbd5e1; margin:0 6px; cursor:pointer; }
+    .dot.active { background:#334155; }
+
+    /* Logs area */
+    .logs { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px; }
+    .panel { background:#fff; padding:12px; border-radius:8px; min-height:160px; box-shadow:0 6px 20px rgba(16,24,40,0.04); }
+    .panel h3 { margin:0 0 8px; font-size:16px; }
+    pre.log { background:#0b1220; color:#d6eaff; padding:12px; border-radius:6px; overflow:auto; max-height:320px; margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size:13px; }
+
+    .log-actions { display:flex; gap:8px; margin-bottom:8px; }
+    .muted { color:#64748b; font-size:13px; }
+
+    @media (max-width:800px) {
+      .logs { grid-template-columns: 1fr; }
+      .slide img { height:220px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to the Dev2 Page</h1>
+    <p class="lead">A demo page with an image slider and log panels for VS Code and GitHub activity.</p>
+  </header>
+
+  <main>
+    <section aria-label="Image slider" style="margin-bottom:18px;">
+      <div class="slider" id="slider" aria-roledescription="carousel">
+        <div class="slides" id="slides">
+          <div class="slide">
+            <img src="images/slide1.jpg" alt="Slide 1 — VS Code" />
+            <p class="muted">Slide 1 — VS Code</p>
+          </div>
+          <div class="slide">
+            <img src="images/slide2.jpg" alt="Slide 2 — GitHub" />
+            <p class="muted">Slide 2 — GitHub</p>
+          </div>
+          <div class="slide">
+            <img src="images/slide3.jpg" alt="Slide 3 — Teamwork" />
+            <p class="muted">Slide 3 — Teamwork</p>
+          </div>
+        </div>
+
+        <div class="controls" aria-hidden="false">
+          <button class="btn" id="prevBtn" aria-label="Previous slide">◀</button>
+          <button class="btn" id="nextBtn" aria-label="Next slide">▶</button>
+        </div>
+
+        <div class="dots" id="dots" aria-hidden="false" style="padding-bottom:12px;"></div>
+      </div>
+    </section>
+
+    <section aria-label="Logs">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0 0 8px;">Logs</h2>
+        <div class="muted">If you have real logs, place them at /logs/vscode.log and /logs/github.log and this page will try to load them.</div>
+      </div>
+
+      <div class="logs">
+        <div class="panel" id="vscodePanel">
+          <h3>VS Code Logs</h3>
+          <div class="log-actions">
+            <button class="btn" onclick="reloadLog('vscode')">Reload</button>
+            <button class="btn" onclick="toggleWrap('vscode')">Toggle Wrap</button>
+          </div>
+          <pre id="vscodeLog" class="log" aria-live="polite">// Sample VS Code log (no file present). Example entries:
+[2026-07-30T09:12:34Z] [info] Extension 'ms-vscode.cpptools' activated
+[2026-07-30T09:12:35Z] [warn] Workspace trust not established for current folder
+[2026-07-30T09:12:36Z] [info] Language server started (pid: 3245)
+[2026-07-30T09:12:40Z] [debug] File saved: src/main.js
+          </pre>
+        </div>
+
+        <div class="panel" id="githubPanel">
+          <h3>GitHub Logs</h3>
+          <div class="log-actions">
+            <button class="btn" onclick="reloadLog('github')">Reload</button>
+            <button class="btn" onclick="toggleWrap('github')">Toggle Wrap</button>
+          </div>
+          <pre id="githubLog" class="log" aria-live="polite">// Sample GitHub log (no file present). Example entries:
+[2026-07-30T09:10:12Z] [info] git commit -m "Update README"
+[2026-07-30T09:11:03Z] [info] git push origin dev2
+[2026-07-30T09:11:20Z] [notice] Pull request created: Add index2.html
+[2026-07-30T09:12:00Z] [debug] CI pipeline started for PR #12
+          </pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Slider logic
+    const slidesEl = document.getElementById('slides');
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const dotsEl = document.getElementById('dots');
+    let current = 0;
+    let autoPlayInterval = null;
+
+    function buildDots() {
+      dotsEl.innerHTML = '';
+      slides.forEach((_, i) => {
+        const d = document.createElement('span');
+        d.className = 'dot' + (i === 0 ? ' active' : '');
+        d.setAttribute('role','button');
+        d.setAttribute('aria-label','Go to slide ' + (i+1));
+        d.onclick = () => goTo(i);
+        dotsEl.appendChild(d);
+      });
+    }
+
+    function update() {
+      slidesEl.style.transform = 'translateX(' + (-current * 100) + '%)';
+      Array.from(dotsEl.children).forEach((d, i) => d.classList.toggle('active', i === current));
+    }
+
+    function prev() { current = (current - 1 + slides.length) % slides.length; update(); resetAutoplay(); }
+    function next() { current = (current + 1) % slides.length; update(); resetAutoplay(); }
+    function goTo(i) { current = i % slides.length; update(); resetAutoplay(); }
+
+    document.getElementById('prevBtn').addEventListener('click', prev);
+    document.getElementById('nextBtn').addEventListener('click', next);
+
+    function startAutoplay() {
+      autoPlayInterval = setInterval(() => next(), 4000);
+    }
+    function resetAutoplay() {
+      if (autoPlayInterval) { clearInterval(autoPlayInterval); startAutoplay(); }
+    }
+
+    buildDots();
+    update();
+    startAutoplay();
+
+    // Log loading logic
+    async function fetchLog(path) {
+      try {
+        const res = await fetch(path);
+        if (!res.ok) throw new Error('Not found');
+        const txt = await res.text();
+        return txt;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    async function reloadLog(kind) {
+      const el = (kind === 'vscode') ? document.getElementById('vscodeLog') : document.getElementById('githubLog');
+      const path = '/logs/' + (kind === 'vscode' ? 'vscode.log' : 'github.log');
+      el.textContent = '// Loading ' + path + ' ...';
+      const txt = await fetchLog(path);
+      if (txt) el.textContent = txt;
+      else {
+        // If no server log exists, keep the sample top lines shown earlier
+        el.textContent = (kind === 'vscode')
+          ? `// No ${path} found on the server. Example VS Code log lines:\n[2026-07-30T09:12:34Z] [info] Extension activated\n[2026-07-30T09:12:36Z] [info] Language server started\n[2026-07-30T09:12:40Z] [debug] File saved: src/main.js`
+          : `// No ${path} found on the server. Example GitHub log lines:\n[2026-07-30T09:10:12Z] [info] git commit -m "Update README"\n[2026-07-30T09:11:03Z] [info] git push origin dev2\n[2026-07-30T09:11:20Z] [notice] Pull request created: Add index2.html`;
+      }
+    }
+
+    function toggleWrap(kind) {
+      const el = (kind === 'vscode') ? document.getElementById('vscodeLog') : document.getElementById('githubLog');
+      if (el.style.whiteSpace === 'pre-wrap') el.style.whiteSpace = 'pre';
+      else el.style.whiteSpace = 'pre-wrap';
+    }
+
+    // Try to load logs on page load (best-effort)
+    window.addEventListener('load', () => {
+      reloadLog('vscode');
+      reloadLog('github');
+    });
+  </script>
+</body>
+</html>
