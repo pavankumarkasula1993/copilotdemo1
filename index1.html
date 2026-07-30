@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TODO CRUD - index1.html</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Roboto, "Segoe UI", Arial; max-width:800px; margin:2rem auto; padding:0 1rem; color:#111; }
+    h1 { text-align:center; }
+    .todo-app { margin-top:1rem; }
+    .input-row { display:flex; gap:.5rem; }
+    input[type="text"] { flex:1; padding:.5rem; font-size:1rem; }
+    button { padding:.5rem .75rem; font-size:1rem; cursor:pointer; }
+    ul { list-style:none; padding:0; margin-top:1rem; }
+    li { display:flex; align-items:center; gap:.5rem; padding:.5rem; border:1px solid #eee; border-radius:6px; margin-bottom:.5rem; }
+    li.completed .text { text-decoration:line-through; color:#777; }
+    .text { flex:1; }
+    .actions button { margin-left:.25rem; }
+    .small { font-size:.9rem; color:#555; margin-top:.5rem; }
+  </style>
+</head>
+<body>
+  <h1>TODO CRUD (index1.html)</h1>
+  <div class="todo-app">
+    <div class="input-row">
+      <input id="newTodo" type="text" placeholder="Enter a new todo and press Add or Enter" />
+      <button id="addBtn">Add</button>
+      <button id="clearBtn">Clear All</button>
+    </div>
+    <div class="small">Data stored in browser localStorage (key: todo-list). This is a demo CRUD app.</div>
+
+    <ul id="todoList" aria-live="polite"></ul>
+  </div>
+
+  <template id="todoItemTemplate">
+    <li>
+      <input class="toggle" type="checkbox" />
+      <div class="text"></div>
+      <div class="actions">
+        <button class="editBtn">Edit</button>
+        <button class="saveBtn" style="display:none">Save</button>
+        <button class="cancelBtn" style="display:none">Cancel</button>
+        <button class="deleteBtn">Delete</button>
+      </div>
+    </li>
+  </template>
+
+  <script>
+    const STORAGE_KEY = 'todo-list';
+    let todos = [];
+
+    // DOM refs
+    const newTodoInput = document.getElementById('newTodo');
+    const addBtn = document.getElementById('addBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const todoList = document.getElementById('todoList');
+    const template = document.getElementById('todoItemTemplate');
+
+    // Load from storage
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        todos = raw ? JSON.parse(raw) : [];
+      } catch(e) {
+        todos = [];
+        console.error('Failed to parse todos from storage', e);
+      }
+    }
+
+    // Save to storage
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    }
+
+    // Render list
+    function render() {
+      todoList.innerHTML = '';
+      todos.forEach(todo => {
+        const node = template.content.firstElementChild.cloneNode(true);
+        node.dataset.id = todo.id;
+        const textEl = node.querySelector('.text');
+        const toggle = node.querySelector('.toggle');
+        const editBtn = node.querySelector('.editBtn');
+        const saveBtn = node.querySelector('.saveBtn');
+        const cancelBtn = node.querySelector('.cancelBtn');
+        const deleteBtn = node.querySelector('.deleteBtn');
+
+        textEl.textContent = todo.text;
+        toggle.checked = !!todo.done;
+        if (todo.done) node.classList.add('completed');
+
+        // Toggle done
+        toggle.addEventListener('change', () => {
+          todo.done = toggle.checked;
+          if (todo.done) node.classList.add('completed');
+          else node.classList.remove('completed');
+          save();
+        });
+
+        // Edit flow
+        editBtn.addEventListener('click', () => {
+          startEdit(node, todo);
+        });
+        saveBtn.addEventListener('click', () => {
+          finishEdit(node, todo, true);
+        });
+        cancelBtn.addEventListener('click', () => {
+          finishEdit(node, todo, false);
+        });
+
+        // Delete
+        deleteBtn.addEventListener('click', () => {
+          todos = todos.filter(t => t.id !== todo.id);
+          save();
+          render();
+        });
+
+        todoList.appendChild(node);
+      });
+    }
+
+    // Start editing: replace text with input
+    function startEdit(node, todo) {
+      const textEl = node.querySelector('.text');
+      const editBtn = node.querySelector('.editBtn');
+      const saveBtn = node.querySelector('.saveBtn');
+      const cancelBtn = node.querySelector('.cancelBtn');
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = todo.text;
+      input.style.flex = '1';
+      node.replaceChild(input, textEl);
+
+      editBtn.style.display = 'none';
+      saveBtn.style.display = '';
+      cancelBtn.style.display = '';
+
+      input.focus();
+      input.select();
+
+      // allow Enter to save, Esc to cancel
+      input.addEventListener('keydown', function onKey(e){
+        if (e.key === 'Enter') {
+          finishEdit(node, todo, true);
+          input.removeEventListener('keydown', onKey);
+        } else if (e.key === 'Escape') {
+          finishEdit(node, todo, false);
+          input.removeEventListener('keydown', onKey);
+        }
+      });
+    }
+
+    // Finish editing: save or revert
+    function finishEdit(node, todo, doSave) {
+      const input = node.querySelector('input[type="text"]') || null;
+      const editBtn = node.querySelector('.editBtn');
+      const saveBtn = node.querySelector('.saveBtn');
+      const cancelBtn = node.querySelector('.cancelBtn');
+
+      if (doSave && input) {
+        const val = input.value.trim();
+        if (val) {
+          todo.text = val;
+          save();
+        } else {
+          // empty -> do not save, delete instead
+          todos = todos.filter(t => t.id !== todo.id);
+          save();
+        }
+      }
+
+      // Re-render to restore proper controls
+      render();
+    }
+
+    // Create new todo
+    function addTodo(text) {
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+      todos.unshift({ id, text, done:false, createdAt: Date.now() });
+      save();
+      render();
+    }
+
+    // Event handlers
+    addBtn.addEventListener('click', () => {
+      const val = newTodoInput.value.trim();
+      if (!val) return;
+      addTodo(val);
+      newTodoInput.value = '';
+      newTodoInput.focus();
+    });
+
+    newTodoInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addBtn.click();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (!confirm('Clear all todos?')) return;
+      todos = [];
+      save();
+      render();
+    });
+
+    // Initialize
+    load();
+    render();
+  </script>
+</body>
+</html>
